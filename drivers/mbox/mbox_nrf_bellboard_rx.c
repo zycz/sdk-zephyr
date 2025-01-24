@@ -11,6 +11,7 @@
 #include <zephyr/sys/__assert.h>
 
 #include <hal/nrf_bellboard.h>
+#include <hal/nrf_gpio.h>
 
 #define BELLBOARD_NUM_IRQS 4U
 
@@ -40,6 +41,7 @@ static uint32_t evt_enabled_masks[BELLBOARD_NUM_IRQS];
 
 static void bellboard_rx_isr(const void *parameter)
 {
+	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 0));
 	uint8_t irq_idx = (uint8_t)(uintptr_t)parameter;
 	uint32_t int_pend;
 
