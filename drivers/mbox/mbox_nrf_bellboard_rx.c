@@ -41,7 +41,12 @@ static uint32_t evt_enabled_masks[BELLBOARD_NUM_IRQS];
 
 static void bellboard_rx_isr(const void *parameter)
 {
+#ifdef CONFIG_SOC_NRF54H20_CPURAD
 	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 0));
+#elif CONFIG_SOC_NRF54H20_CPUAPP
+	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 3));
+#endif
+	// nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 0));
 	uint8_t irq_idx = (uint8_t)(uintptr_t)parameter;
 	uint32_t int_pend;
 
