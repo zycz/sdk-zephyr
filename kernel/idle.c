@@ -15,6 +15,7 @@
 #include <ksched.h>
 #include <kswap.h>
 #include <wait_q.h>
+#include <hal/nrf_gpio.h>
 
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
@@ -27,6 +28,11 @@ void idle(void *unused1, void *unused2, void *unused3)
 	__ASSERT_NO_MSG(_current->base.prio >= 0);
 
 	while (true) {
+#ifdef CONFIG_SOC_NRF54H20_CPURAD
+	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 2));
+#elif CONFIG_SOC_NRF54H20_CPUAPP
+	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 5));
+#endif
 		/* SMP systems without a working IPI can't actual
 		 * enter an idle state, because they can't be notified
 		 * of scheduler changes (i.e. threads they should
