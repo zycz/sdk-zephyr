@@ -16,6 +16,8 @@
 #include "soc.h"
 #include "pm_s2ram.h"
 
+#include <hal/nrf_gpio.h>
+
 extern sys_snode_t soc_node;
 
 static void nrf_power_down_cache(void)
@@ -185,8 +187,10 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	if (state == PM_STATE_SUSPEND_TO_IDLE) {
 		__disable_irq();
 		sys_trace_idle();
+		nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 6));
 		s2idle_enter(substate_id);
 		/* Resume here. */
+		nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 5));
 		s2idle_exit(substate_id);
 		sys_trace_idle_exit();
 		__enable_irq();
@@ -195,8 +199,10 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	else if (state == PM_STATE_SUSPEND_TO_RAM) {
 		__disable_irq();
 		sys_trace_idle();
+		nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 8));
 		s2ram_enter();
 		/* On resuming or error we return exactly *HERE* */
+		nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 3));
 		s2ram_exit();
 		sys_trace_idle_exit();
 		__enable_irq();

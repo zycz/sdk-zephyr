@@ -8,6 +8,8 @@
 #include <zephyr/drivers/mbox.h>
 #include <zephyr/sys/printk.h>
 
+#include <hal/nrf_gpio.h>
+
 #if !defined(CONFIG_RX_ENABLED) && !defined(CONFIG_TX_ENABLED)
 #error "At least one of CONFIG_RX_ENABLED or CONFIG_TX_ENABLED must be set"
 #endif
@@ -16,6 +18,8 @@
 static void callback(const struct device *dev, mbox_channel_id_t channel_id,
 		     void *user_data, struct mbox_msg *data)
 {
+
+	nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 4));
 	printk("Pong (on channel %d)\n", channel_id);
 }
 #endif /* CONFIG_RX_ENABLED */
@@ -23,6 +27,10 @@ static void callback(const struct device *dev, mbox_channel_id_t channel_id,
 int main(void)
 {
 	int ret;
+
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 4));
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 5));
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 6));
 
 	printk("Hello from REMOTE - %s\n", CONFIG_BOARD_TARGET);
 

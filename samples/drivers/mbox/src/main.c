@@ -8,6 +8,8 @@
 #include <zephyr/drivers/mbox.h>
 #include <zephyr/sys/printk.h>
 
+#include <hal/nrf_gpio.h>
+
 #ifdef CONFIG_RX_ENABLED
 static void callback(const struct device *dev, mbox_channel_id_t channel_id,
 		     void *user_data, struct mbox_msg *data)
@@ -19,6 +21,10 @@ static void callback(const struct device *dev, mbox_channel_id_t channel_id,
 int main(void)
 {
 	int ret;
+
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 2));
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 3));
+	nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(1, 8));
 
 	printk("Hello from HOST - %s\n", CONFIG_BOARD_TARGET);
 
@@ -55,6 +61,7 @@ int main(void)
 
 		printk("Ping (on channel %d)\n", tx_channel.channel_id);
 
+		nrf_gpio_pin_toggle(NRF_GPIO_PIN_MAP(1, 2));
 		ret = mbox_send_dt(&tx_channel, NULL);
 		if (ret < 0) {
 			printk("Could not send (%d)\n", ret);
