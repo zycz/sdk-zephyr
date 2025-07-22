@@ -51,10 +51,12 @@ int main(void)
 
 	printk("Maximum bytes of data in the TX message: %d\n", mbox_mtu_get_dt(&tx_channel));
 	printk("Maximum TX channels: %d\n", mbox_max_channels_get_dt(&tx_channel));
+	static int delay = 5;
 
 	while (1) {
 #if defined(CONFIG_MULTITHREADING)
-		k_sleep(K_MSEC(2000));
+		k_sleep(K_MSEC(delay));
+		delay += 1;
 #else
 		k_busy_wait(2000000);
 #endif
