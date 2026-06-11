@@ -84,6 +84,25 @@ struct pm_notifier {
 	bool report_substate; /* 0 is for backwards compatibility that didn't report substates */
 };
 
+/**
+ * @brief Dynamically allow or block idle-thread PM suspend (hack).
+ *
+ * When @a enable is false, the idle thread skips pm_system_suspend() and only
+ * calls k_cpu_idle(). When true (default), PM suspend behaves normally.
+ *
+ * Safe to call from thread or ISR context.
+ *
+ * @param enable true to allow idle PM suspend, false to block it.
+ */
+ void pm_idle_suspend_set(bool enable);
+
+ /**
+  * @brief Get idle-thread PM suspend allowance.
+  *
+  * @return true if idle PM suspend is allowed, false if blocked.
+  */
+ bool pm_idle_suspend_get(void);
+
 #if defined(CONFIG_PM) || defined(__DOXYGEN__)
 /**
  * @brief Force usage of given power state.

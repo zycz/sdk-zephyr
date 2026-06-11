@@ -11,6 +11,7 @@
 #include <zephyr/llext/symbol.h>
 #include <zephyr/pm/pm.h>
 #include <stdbool.h>
+#include <zephyr/sys/atomic.h>
 #include <zephyr/logging/log.h>
 /* private kernel APIs */
 #include <ksched.h>
@@ -18,6 +19,15 @@
 #include <wait_q.h>
 
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
+
+#ifdef CONFIG_PM
+/*
+ * Hack: allow application to dynamically block idle PM suspend
+ * (e.g. keep CPU out of deep sleep during time-critical radio work).
+ * Default: allowed (true).
+ */
+static atomic_t pm_idle_suspend_allowed = ATOMIC_INIT(1);
+#endif
 
 void idle(void *unused1, void *unused2, void *unused3)
 {
@@ -51,25 +61,29 @@ void idle(void *unused1, void *unused2, void *unused3)
 		(void) arch_irq_lock();
 
 #ifdef CONFIG_PM
-		_kernel.idle = z_get_next_timeout_expiry();
-
-		/*
-		 * Call the suspend hook function of the soc interface
-		 * to allow entry into a low power state. The function
-		 * returns false if low power state was not entered, in
-		 * which case, kernel does normal idle processing.
-		 *
-		 * This function is entered with interrupts disabled.
-		 * If a low power state was entered, then the hook
-		 * function should enable interrupts before exiting.
-		 * This is because the kernel does not do its own idle
-		 * processing in those cases i.e. skips k_cpu_idle().
-		 * The kernel's idle processing re-enables interrupts
-		 * which is essential for the kernel's scheduling
-		 * logic.
-		 */
-		if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
+		if (!atomic_get(&pm_idle_suspend_allowed)) {
 			k_cpu_idle();
+		} else {
+			_kernel.idle = z_get_next_timeout_expiry();
+
+			/*
+			 * Call the suspend hook function of the soc interface
+			 * to allow entry into a low power state. The function
+			 * returns false if low power state was not entered, in
+			 * which case, kernel does normal idle processing.
+			 *
+			 * This function is entered with interrupts disabled.
+			 * If a low power state was entered, then the hook
+			 * function should enable interrupts before exiting.
+			 * This is because the kernel does not do its own idle
+			 * processing in those cases i.e. skips k_cpu_idle().
+			 * The kernel's idle processing re-enables interrupts
+			 * which is essential for the kernel's scheduling
+			 * logic.
+			 */
+			if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
+				k_cpu_idle();
+			}
 		}
 #else
 		k_cpu_idle();
@@ -92,6 +106,24 @@ void idle(void *unused1, void *unused2, void *unused3)
 # endif /* !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC) */
 #endif /* !defined(CONFIG_PREEMPT_ENABLED) */
 	}
+}
+
+void pm_idle_suspend_set(bool enable)
+{
+#ifdef CONFIG_PM
+	atomic_set(&pm_idle_suspend_allowed, enable ? 1 : 0);
+#else
+	ARG_UNUSED(enable);
+#endif
+}
+
+bool pm_idle_suspend_get(void)
+{
+#ifdef CONFIG_PM
+	return atomic_get(&pm_idle_suspend_allowed) != 0;
+#else
+	return false;
+#endif
 }
 
 void __weak arch_spin_relax(void)

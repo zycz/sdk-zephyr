@@ -135,7 +135,7 @@
 				compatible = "zephyr,power-state";
 				power-state-name = "suspend-to-idle";
 				substate-id = <1>;
-				min-residency-us = <700>;
+				min-residency-us = <70>;
 				exit-latency-us = <5>;
 			};
 
@@ -143,7 +143,7 @@
 				compatible = "zephyr,power-state";
 				power-state-name = "suspend-to-idle";
 				substate-id = <2>;
-				min-residency-us = <1000>;
+				min-residency-us = <100>;
 				exit-latency-us = <7>;
 			};
 
